@@ -1,340 +1,122 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plus, ArrowRight, Radio } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { ArrowRight, Lock } from 'lucide-react';
 
-// Connect to the Supabase Database
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
-  <svg viewBox="0 0 60 40" fill="none" stroke={stroke} strokeWidth="2" className={className}>
-    <circle cx="22" cy="20" r="14" />
-    <circle cx="38" cy="20" r="14" />
-  </svg>
-);
-
-export default function DropCirclesApp() {
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [formMode, setFormMode] = useState<'unlock' | 'request'>('unlock');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'denied' | 'success'>('idle');
-  const [serverError, setServerError] = useState('');
-  
-  const [key, setKey] = useState('');
+export default function ArtistLogin() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
-  const [activeTab, setActiveTab] = useState('drop');
-
-  const [vaultTracks, setVaultTracks] = useState<any[]>([]);
-  const [isFetching, setIsFetching] = useState(false);
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isUnlocked && activeTab === 'drop') {
-      fetchVaultTracks();
-    }
-  }, [isUnlocked, activeTab]);
+    checkUser();
+  }, []);
 
-  const fetchVaultTracks = async () => {
-    setIsFetching(true);
+  const checkUser = async () => {
     try {
-      const { data, error } = await supabase
-        .from('circles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error("SYSTEM HALTED: Vercel is missing Supabase Environment Variables.");
+      }
+      const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) throw error;
-      setVaultTracks(data || []);
-    } catch (error) {
-      console.error("Failed to fetch tracks:", error);
-    } finally {
-      setIsFetching(false);
+      
+      if (session?.user?.email) {
+        router.push('/artist/hub');
+      } else {
+        // THE FIX: Fire and forget. Do not 'await', so it can never hang.
+        supabase.auth.signOut().catch(() => {});
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+        }
+        setIsLoading(false); // Instantly drop the loading screen
+      }
+    } catch (err: any) {
+      console.error("Auth check failed:", err);
+      // Failsafe: if it errors out, wipe everything and show the login form anyway
+      supabase.auth.signOut().catch(() => {});
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      setError("SESSION CLEARED. PLEASE LOG IN AGAIN.");
+      setIsLoading(false);
     }
   };
 
-  const triggerDrop = async (circleId: string, trackTitle: string) => {
-    const confirmDrop = window.confirm(`ARE YOU SURE YOU WANT TO MAKE "${trackTitle}" LIVE?`);
-    if (!confirmDrop) return;
-
-    try {
-      const { error } = await supabase
-        .from('circles')
-        .update({ is_live: true })
-        .eq('id', circleId);
-
-      if (error) throw error;
-      
-      alert(`"${trackTitle}" IS NOW LIVE.`);
-      fetchVaultTracks(); 
-      
-    } catch (error) {
-      console.error("Failed to make live:", error);
-      alert("FAILED TO TRIGGER DROP. TRY AGAIN.");
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setServerError('');
-    
-    if (formMode === 'unlock' && key.trim().toUpperCase() === 'EIGHT') {
-      setIsUnlocked(true);
-      return;
-    }
+    setError('');
+    setIsLoading(true);
 
-    if (formMode === 'unlock') {
-      if (!key) return;
-      setStatus('loading');
-      const enteredKey = key.trim().toUpperCase();
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      try {
-        const { data: keyData, error: keyError } = await supabase
-          .from('access_keys')
-          .select('*')
-          .eq('code', enteredKey)
-          .single();
-
-        if (keyError || !keyData) {
-          setStatus('denied');
-          setServerError('ACCESS DENIED. INVALID KEY.');
-          return;
-        }
-
-        if (keyData.current_uses >= keyData.max_uses) {
-          setStatus('denied');
-          setServerError('CAPACITY REACHED. THE VAULT IS SEALED.');
-          return;
-        }
-
-        await supabase
-          .from('access_keys')
-          .update({ current_uses: keyData.current_uses + 1 })
-          .eq('code', enteredKey);
-
-        setIsUnlocked(true);
-
-      } catch (error) {
-        setStatus('denied');
-        setServerError('NETWORK ERROR. PLEASE RETRY.');
-      }
-    } else {
-      if (!email) return;
-      setStatus('loading');
-      try {
-        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            service_id: 'service_xowlhf8',
-            template_id: 'template_v1eu7an',
-            user_id: '8AZcPyaE3LqYBe1o6',
-            template_params: { fan_email: email }
-          }),
-        });
-        
-        if (response.ok) {
-          setStatus('success');
-          setEmail('');
-        } else {
-          setStatus('denied');
-          setServerError('API REJECTED. PLEASE RETRY.');
-        }
-      } catch (error) {
-        setStatus('denied');
-        setServerError('NETWORK ERROR. PLEASE RETRY.');
-      }
+      if (error) throw error;
+      router.push('/artist/hub');
+    } catch (err: any) {
+      setError("AUTHORIZATION DENIED: " + err.message);
+      setIsLoading(false);
     }
   };
 
-  if (isUnlocked) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f4f4f0] text-black font-sans selection:bg-black selection:text-[#f4f4f0] pb-32 animate-in fade-in duration-1000">
-        <nav className="flex justify-between items-center px-6 py-4 border-b-2 border-black bg-white">
-          <div className="flex items-center gap-3">
-            <LinkedCirclesLogo className="w-10 h-6" stroke="black" />
-            <span className="text-2xl font-serif tracking-tighter mt-1">DropCircles</span>
-          </div>
-          <div className="flex gap-8 text-xs font-bold uppercase tracking-[0.2em] hidden md:flex">
-            <button onClick={() => setActiveTab('drop')} className={`hover:text-red-600 transition-colors ${activeTab === 'drop' && 'text-red-600 border-b-2 border-red-600'}`}>Control Room</button>
-            <button onClick={() => setActiveTab('guestlist')} className={`hover:text-red-600 transition-colors ${activeTab === 'guestlist' && 'text-red-600 border-b-2 border-red-600'}`}>Guestlist</button>
-            <button onClick={() => setActiveTab('vault')} className={`hover:text-red-600 transition-colors ${activeTab === 'vault' && 'text-red-600 border-b-2 border-red-600'}`}>Capital</button>
-          </div>
-          <div className="w-10 h-10 bg-black text-white flex items-center justify-center text-xs font-bold uppercase tracking-widest">
-            ART
-          </div>
-        </nav>
-
-        <main className="max-w-4xl mx-auto pt-16 px-6">
-          <div className="mb-16 border-b-2 border-black pb-12">
-            <h1 className="font-serif text-6xl md:text-7xl font-bold tracking-tight mb-4">Launch Console</h1>
-            <p className="font-mono text-sm uppercase tracking-widest text-zinc-500 mb-6">[ Secure Release Environment ]</p>
-          </div>
-
-          {activeTab === 'drop' && (
-            <div className="animate-in fade-in duration-300">
-              <h2 className="font-serif text-4xl font-bold mb-6 flex items-center gap-4">
-                The Artifacts 
-                {isFetching && <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 animate-pulse">Syncing...</span>}
-              </h2>
-              
-              <div className="space-y-0 border-t-2 border-black bg-white">
-                {vaultTracks.length === 0 && !isFetching && (
-                  <div className="p-8 text-center font-mono text-xs uppercase tracking-widest text-zinc-500">
-                    THE VAULT IS EMPTY. UPLOAD AN ARTIFACT.
-                  </div>
-                )}
-
-                {vaultTracks.map((track) => (
-                  <div key={track.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b-2 border-black hover:bg-zinc-50 transition-colors group">
-                    <div className="mb-4 sm:mb-0">
-                      <h3 className={`font-bold text-xl uppercase tracking-tight ${track.is_live ? 'text-[#4ade80]' : 'text-black'}`}>
-                        {track.title}
-                      </h3>
-                      <p className="text-xs font-mono text-zinc-500 mt-2 uppercase tracking-widest">
-                        STATUS: {track.is_live ? 'LIVE (TRANSMITTING)' : 'STANDBY (LOCKED)'}
-                      </p>
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      {!track.is_live ? (
-                        <button 
-                          onClick={() => triggerDrop(track.id, track.title)}
-                          className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest border-2 border-black bg-black text-white hover:bg-[#ff3300] hover:border-[#ff3300] transition-colors flex items-center gap-2"
-                        >
-                          <Radio size={14} /> Trigger Drop
-                        </button>
-                      ) : (
-                        <span className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest border-2 border-zinc-200 text-zinc-400 bg-zinc-50">
-                          Active
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'guestlist' && (
-             <div className="p-8 text-center font-mono text-xs uppercase tracking-widest text-zinc-500">GUESTLIST DATA MIGRATING...</div>
-          )}
-          {activeTab === 'vault' && (
-             <div className="p-8 text-center font-mono text-xs uppercase tracking-widest text-zinc-500">CAPITAL DATA MIGRATING...</div>
-          )}
-        </main>
-
-        <Link 
-          href="/vault" 
-          className="fixed bottom-8 right-8 w-16 h-16 bg-[#ff3300] text-white hover:bg-black hover:scale-105 transition-all flex items-center justify-center rounded-none z-50 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-black"
-        >
-          <Plus size={32} strokeWidth={2} />
-        </Link>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em]">
+        INITIALIZING WORKSPACE...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center py-24 px-6 relative overflow-x-hidden">
-      
-      {/* ABSOLUTE LOGO */}
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-1000">
-        <LinkedCirclesLogo className="w-16 h-10 text-white opacity-90" />
-      </div>
-
-      <main className="w-full max-w-4xl mx-auto flex flex-col items-center mt-16 animate-in fade-in duration-1000 delay-300 fill-mode-both">
+    <div className="min-h-screen bg-[#f4f4f0] text-black font-sans selection:bg-black selection:text-[#f4f4f0] flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white border-4 border-black p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center animate-in fade-in duration-500">
+        <Lock size={32} className="mx-auto mb-6 text-black" />
+        <h1 className="font-serif text-4xl font-bold tracking-tighter mb-2">DropCircles</h1>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mb-8">SECURE VISIONARY TERMINAL</p>
         
-        {/* INVITE ONLY HERO */}
-        <div className="w-full max-w-2xl mx-auto flex flex-col items-center">
-          <h1 className="text-6xl md:text-[8rem] font-serif font-bold tracking-tighter mb-12">
-            INVITE ONLY
-          </h1>
-
-          <div className="flex flex-col items-center text-center space-y-10 mb-16 w-full">
-            <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-400">
-              THE ECOSYSTEM IS CURRENTLY LOCKED.
-            </p>
-
-            <div className="border-l border-zinc-700 pl-6 text-left space-y-4 py-2 mx-auto">
-              <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-300 leading-relaxed">
-                [01] A CLOSED-CIRCUIT<br/>INFRASTRUCTURE.
-              </p>
-              <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-300">
-                [02] ZERO LEAKS. ZERO ALGORITHMS.
-              </p>
-              <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-300">
-                [03] DIRECT-TO-VAULT DROPS.
-              </p>
-            </div>
-
-            <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-500 max-w-sm mx-auto leading-relaxed pt-6">
-              BETA ACCESS IS STRICTLY LIMITED TO 100 VISIONARIES.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-8 relative mt-4">
-            <div className="relative overflow-hidden">
-              {formMode === 'unlock' ? (
-                <input 
-                  type="text" 
-                  placeholder="ENTER ACCESS KEY" 
-                  className="w-full bg-transparent border-b border-zinc-700 py-4 font-mono text-center text-xs md:text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-600 text-white"
-                  value={key}
-                  onChange={(e) => { setKey(e.target.value); setStatus('idle'); setServerError(''); }}
-                />
-              ) : (
-                <input 
-                  type="email" 
-                  placeholder="ENTER EMAIL ADDRESS" 
-                  className="w-full bg-transparent border-b border-zinc-700 py-4 font-mono text-center text-xs md:text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-600 text-white"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setStatus('idle'); setServerError(''); }}
-                  required
-                />
-              )}
-            </div>
-            
-            <button 
-              type="submit"
-              disabled={status === 'loading' || status === 'success'}
-              className="w-full bg-black text-white border border-white py-5 font-bold text-xs uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-            >
-              {status === 'loading' ? 'PROCESSING...' : status === 'success' ? 'REQUEST RECEIVED' : formMode === 'unlock' ? 'UNLOCK' : 'SUBMIT REQUEST'}
-              {!status && <ArrowRight size={16} />}
-            </button>
-
-            <div className="h-4 flex flex-col items-center justify-start text-center">
-              {status === 'denied' && (
-                <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">{serverError}</p>
-              )}
-              {status === 'success' && formMode === 'request' && (
-                <p className="font-mono text-[10px] text-[#4ade80] uppercase tracking-widest animate-pulse">POSITION SECURED. WE WILL BE IN TOUCH.</p>
-              )}
-            </div>
-          </form>
-
+        <form onSubmit={handleLogin} className="space-y-6">
+          <input 
+            type="email" 
+            placeholder="EMAIL DESIGNATION" 
+            required
+            className="w-full bg-transparent border-b-2 border-zinc-300 py-3 font-mono text-center text-xs uppercase tracking-[0.2em] focus:outline-none focus:border-black transition-colors"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input 
+            type="password" 
+            placeholder="PASSPHRASE" 
+            required
+            className="w-full bg-transparent border-b-2 border-zinc-300 py-3 font-mono text-center text-xs uppercase tracking-[0.2em] focus:outline-none focus:border-black transition-colors"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
           <button 
-            onClick={() => { setFormMode(formMode === 'unlock' ? 'request' : 'unlock'); setStatus('idle'); setServerError(''); setKey(''); setEmail(''); }}
-            className="mt-16 font-mono text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-[0.2em] border-b border-zinc-700 hover:border-white pb-1"
+            type="submit"
+            className="w-full bg-black text-white py-4 font-bold text-[10px] uppercase tracking-[0.3em] hover:bg-[#ff3300] transition-colors flex items-center justify-center gap-3"
           >
-            {formMode === 'unlock' ? "REQUEST A BETA KEY" : "HAVE A KEY? UNLOCK"}
+            AUTHORIZE <ArrowRight size={14} />
           </button>
-        </div>
+        </form>
 
-        {/* SUBTLE MANIFESTO AT THE BOTTOM */}
-        <div className="text-center mt-32 space-y-8 opacity-40 hover:opacity-100 transition-opacity duration-700 pb-12">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight">
-            <span className="text-zinc-600 block">No platform.</span>
-            <span className="text-zinc-600 block">No permission.</span>
-            <span className="text-zinc-600 block">No performance.</span>
-          </h2>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight">
-            <span className="text-zinc-400 block">You create.</span>
-            <span className="text-zinc-400 block">You invite.</span>
-            <span className="text-zinc-400 block">You collect.</span>
-          </h2>
-        </div>
-
-      </main>
+        {error && (
+          <div className="mt-6 p-4 border-2 border-red-200 bg-red-50 text-red-600 font-mono text-[10px] uppercase tracking-widest leading-relaxed">
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
