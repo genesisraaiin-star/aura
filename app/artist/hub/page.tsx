@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Users, Download } from 'lucide-react';
+import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Users, Download, DollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
@@ -27,9 +27,9 @@ export default function VisionaryHub() {
   // UI States
   const [activeCircle, setActiveCircle] = useState<any>(null);
   const [newCircleTitle, setNewCircleTitle] = useState('');
-  const [newCircleCapacity, setNewCircleCapacity] = useState('100'); // SCARCITY STATE
+  const [newCircleCapacity, setNewCircleCapacity] = useState('100'); 
   const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'artifacts' | 'guestlist'>('artifacts');
+  const [activeTab, setActiveTab] = useState<'artifacts' | 'guestlist' | 'capital'>('artifacts');
 
   useEffect(() => {
     checkUserAndFetchCircles();
@@ -94,7 +94,6 @@ export default function VisionaryHub() {
 
     const { data, error } = await supabase
       .from('circles')
-      // WE NOW INJECT THE CUSTOM CAPACITY INTO THE DATABASE
       .insert([{ title: newCircleTitle, max_capacity: capacity, is_live: false, artist_id: user.id }])
       .select()
       .single();
@@ -249,13 +248,13 @@ export default function VisionaryHub() {
             ))}
 
             {circles.length < 3 && (
-              <form onSubmit={createCircle} className="border-2 border-dashed border-zinc-400 bg-transparent p-4 flex flex-col gap-4 focus-within:border-black transition-colors mt-6">
-                <div className="flex gap-2">
+              <form onSubmit={createCircle} className="border-2 border-dashed border-zinc-400 bg-transparent p-4 flex flex-col gap-4 focus-within:border-black transition-colors mt-6 relative">
+                <div className="flex gap-2 relative">
                   <input 
                     type="text" 
                     placeholder="CIRCLE NAME" 
                     required
-                    className="w-full bg-transparent border-b-2 border-zinc-300 py-2 font-mono text-xs uppercase tracking-widest focus:outline-none focus:border-black transition-colors"
+                    className="flex-1 bg-transparent border-b-2 border-zinc-300 py-2 font-mono text-xs uppercase tracking-widest focus:outline-none focus:border-black transition-colors min-w-0"
                     value={newCircleTitle}
                     onChange={(e) => setNewCircleTitle(e.target.value)}
                   />
@@ -265,10 +264,22 @@ export default function VisionaryHub() {
                     required
                     min="1"
                     title="Max Capacity"
-                    className="w-20 bg-transparent border-b-2 border-zinc-300 py-2 font-mono text-xs text-center uppercase tracking-widest focus:outline-none focus:border-black transition-colors"
+                    className="w-16 flex-shrink-0 bg-transparent border-b-2 border-zinc-300 py-2 font-mono text-xs text-center uppercase tracking-widest focus:outline-none focus:border-black transition-colors"
                     value={newCircleCapacity}
                     onChange={(e) => setNewCircleCapacity(e.target.value)}
                   />
+                  
+                  {/* THE MONETIZATION PLACEHOLDER INPUT */}
+                  <div className="relative w-16 flex-shrink-0 group cursor-not-allowed">
+                    <input 
+                      type="text" 
+                      placeholder="$0.00" 
+                      disabled
+                      title="Monetization coming in V2"
+                      className="w-full bg-zinc-100 border-b-2 border-zinc-200 py-2 font-mono text-xs text-center uppercase tracking-widest text-zinc-400 cursor-not-allowed"
+                    />
+                    <span className="absolute -top-2 -right-2 bg-black text-white text-[8px] px-1 font-bold tracking-widest z-10">V2</span>
+                  </div>
                 </div>
                 <button type="submit" className="w-full bg-zinc-200 text-black py-3 font-bold text-[10px] uppercase tracking-widest hover:bg-black hover:text-white transition-colors flex items-center justify-center gap-2">
                   <Plus size={14} /> Forge Circle
@@ -316,18 +327,25 @@ export default function VisionaryHub() {
                 </div>
               </div>
 
-              <div className="flex gap-8 border-b-2 border-zinc-200 mb-8 mt-4">
+              {/* TABS: ARTIFACTS | GUESTLIST | CAPITAL */}
+              <div className="flex gap-8 border-b-2 border-zinc-200 mb-8 mt-4 overflow-x-auto">
                 <button 
                   onClick={() => setActiveTab('artifacts')} 
-                  className={`font-mono text-xs font-bold uppercase tracking-widest pb-3 transition-colors ${activeTab === 'artifacts' ? 'text-black border-b-4 border-black -mb-[2px]' : 'text-zinc-400 hover:text-black'}`}
+                  className={`font-mono text-xs font-bold uppercase tracking-widest pb-3 transition-colors flex-shrink-0 ${activeTab === 'artifacts' ? 'text-black border-b-4 border-black -mb-[2px]' : 'text-zinc-400 hover:text-black'}`}
                 >
                   Artifacts ({artifacts.length})
                 </button>
                 <button 
                   onClick={() => setActiveTab('guestlist')} 
-                  className={`font-mono text-xs font-bold uppercase tracking-widest pb-3 transition-colors flex items-center gap-2 ${activeTab === 'guestlist' ? 'text-black border-b-4 border-black -mb-[2px]' : 'text-zinc-400 hover:text-black'}`}
+                  className={`font-mono text-xs font-bold uppercase tracking-widest pb-3 transition-colors flex items-center gap-2 flex-shrink-0 ${activeTab === 'guestlist' ? 'text-black border-b-4 border-black -mb-[2px]' : 'text-zinc-400 hover:text-black'}`}
                 >
                   Guestlist ({fans.length}/{activeCircle.max_capacity || 100})
+                </button>
+                <button 
+                  onClick={() => setActiveTab('capital')} 
+                  className={`font-mono text-xs font-bold uppercase tracking-widest pb-3 transition-colors flex items-center gap-2 flex-shrink-0 ${activeTab === 'capital' ? 'text-black border-b-4 border-black -mb-[2px]' : 'text-zinc-400 hover:text-black'}`}
+                >
+                  Capital <Lock size={12} className="mb-[2px]" />
                 </button>
               </div>
 
@@ -404,6 +422,29 @@ export default function VisionaryHub() {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* TAB CONTENT: CAPITAL (THE PLACEHOLDER) */}
+              {activeTab === 'capital' && (
+                <div className="flex-1 space-y-4 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">Vault Economics</h3>
+                  </div>
+                  
+                  <div className="py-24 flex flex-col items-center justify-center bg-zinc-50 border-2 border-dashed border-zinc-300 text-center relative overflow-hidden group">
+                    <div className="absolute top-6 right-6 bg-black text-white px-3 py-1 text-[10px] font-bold tracking-widest uppercase">BETA V2</div>
+                    
+                    <DollarSign size={48} className="text-zinc-300 mb-6 group-hover:text-black transition-colors duration-500" />
+                    
+                    <h3 className="font-serif text-3xl font-bold tracking-tight mb-4 text-zinc-400 group-hover:text-black transition-colors duration-500">
+                      Direct-to-Vault Routing
+                    </h3>
+                    
+                    <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500 max-w-md leading-relaxed px-6">
+                      MONETIZATION IS CURRENTLY IN CLOSED BETA. <br/><br/>SOON, YOU WILL BE ABLE TO SET A SECURE ENTRY FEE FOR YOUR DROPCIRCLES AND ROUTE CAPITAL DIRECTLY TO YOUR STRIPE ACCOUNT. ZERO MIDDLEMEN.
+                    </p>
+                  </div>
                 </div>
               )}
 
