@@ -1,8 +1,9 @@
 "use client";
 import React, { useState } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
-import { submitWaitlist } from './actions';
+import emailjs from '@emailjs/browser';
 
+// The geometric Infinity/Connection Logo
 const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
   <svg viewBox="0 0 60 40" fill="none" stroke={stroke} strokeWidth="2" className={className}>
     <circle cx="22" cy="20" r="14" />
@@ -14,7 +15,7 @@ export default function AuraApp() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [formMode, setFormMode] = useState<'unlock' | 'request'>('unlock');
   const [status, setStatus] = useState<'idle' | 'loading' | 'denied' | 'success'>('idle');
-  const [serverError, setServerError] = useState(''); // NEW STATE FOR DEBUGGING
+  const [serverError, setServerError] = useState('');
   
   const [key, setKey] = useState('');
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export default function AuraApp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setServerError(''); // Clear old errors
+    setServerError('');
     
     if (formMode === 'unlock') {
       if (!key) return;
@@ -33,7 +34,7 @@ export default function AuraApp() {
           setIsUnlocked(true);
         } else {
           setStatus('denied');
-          setServerError('INVALID ACCESS KEY');
+          setServerError('ACCESS DENIED.');
         }
       }, 1200);
     } else {
@@ -41,19 +42,27 @@ export default function AuraApp() {
       setStatus('loading');
       
       try {
-        const result = await submitWaitlist(email);
+        // PING EMAILJS DIRECTLY FROM THE BROWSER
+        const result = await emailjs.send(
+          'service_xowlhf8',          // YOUR LIVE SERVICE ID
+          'template_v1eu7an',         // YOUR LIVE TEMPLATE ID
+          {
+            fan_email: email,
+          },
+          '8AZcPyaE3LqYBe1o6'         // YOUR LIVE PUBLIC KEY
+        );
         
-        if (result && result.success) {
+        if (result.status === 200) {
           setStatus('success');
           setEmail('');
         } else {
           setStatus('denied');
-          // PRINT THE EXACT BACKEND ERROR TO THE SCREEN
-          setServerError(result?.errorMessage || 'UNKNOWN NETWORK ERROR');
+          setServerError('API REJECTED. PLEASE RETRY.');
         }
       } catch (error: any) {
+        console.error("EmailJS Failed:", error);
         setStatus('denied');
-        setServerError(error.message || 'FATAL CLIENT ERROR');
+        setServerError(error.text || 'NETWORK ERROR. PLEASE RETRY.');
       }
     }
   };
@@ -92,6 +101,7 @@ export default function AuraApp() {
           {activeTab === 'drop' && (
             <div className="animate-in fade-in duration-300">
               <h2 className="font-serif text-4xl font-bold mb-6">The Artifacts</h2>
+              
               <div className="space-y-0 border-t-2 border-black bg-white">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b-2 border-black hover:bg-zinc-50 transition-colors cursor-pointer group">
                   <div className="mb-4 sm:mb-0">
