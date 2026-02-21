@@ -14,6 +14,7 @@ export default function AuraApp() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [formMode, setFormMode] = useState<'unlock' | 'request'>('unlock');
   const [status, setStatus] = useState<'idle' | 'loading' | 'denied' | 'success'>('idle');
+  const [serverError, setServerError] = useState(''); // NEW STATE FOR DEBUGGING
   
   const [key, setKey] = useState('');
   const [email, setEmail] = useState('');
@@ -21,6 +22,7 @@ export default function AuraApp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError(''); // Clear old errors
     
     if (formMode === 'unlock') {
       if (!key) return;
@@ -31,6 +33,7 @@ export default function AuraApp() {
           setIsUnlocked(true);
         } else {
           setStatus('denied');
+          setServerError('INVALID ACCESS KEY');
         }
       }, 1200);
     } else {
@@ -38,19 +41,19 @@ export default function AuraApp() {
       setStatus('loading');
       
       try {
-        // Ping the secure Server Action
         const result = await submitWaitlist(email);
         
         if (result && result.success) {
           setStatus('success');
           setEmail('');
         } else {
-          // Triggers the red 'NETWORK ERROR' if API fails
-          setStatus('denied'); 
+          setStatus('denied');
+          // PRINT THE EXACT BACKEND ERROR TO THE SCREEN
+          setServerError(result?.errorMessage || 'UNKNOWN NETWORK ERROR');
         }
-      } catch (error) {
-        // Failsafe so the button never hangs forever
+      } catch (error: any) {
         setStatus('denied');
+        setServerError(error.message || 'FATAL CLIENT ERROR');
       }
     }
   };
@@ -89,7 +92,6 @@ export default function AuraApp() {
           {activeTab === 'drop' && (
             <div className="animate-in fade-in duration-300">
               <h2 className="font-serif text-4xl font-bold mb-6">The Artifacts</h2>
-              
               <div className="space-y-0 border-t-2 border-black bg-white">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b-2 border-black hover:bg-zinc-50 transition-colors cursor-pointer group">
                   <div className="mb-4 sm:mb-0">
@@ -227,6 +229,7 @@ export default function AuraApp() {
                 onChange={(e) => {
                   setKey(e.target.value);
                   setStatus('idle');
+                  setServerError('');
                 }}
               />
             ) : (
@@ -239,6 +242,7 @@ export default function AuraApp() {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setStatus('idle');
+                  setServerError('');
                 }}
                 required
               />
@@ -255,15 +259,10 @@ export default function AuraApp() {
              formMode === 'unlock' ? 'UNLOCK' : 'SUBMIT REQUEST'}
           </button>
 
-          <div className="h-4 flex justify-center">
-            {status === 'denied' && formMode === 'unlock' && (
-              <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-pulse">
-                ACCESS DENIED.
-              </p>
-            )}
-            {status === 'denied' && formMode === 'request' && (
-              <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-pulse">
-                NETWORK ERROR. PLEASE RETRY.
+          <div className="h-10 flex flex-col items-center justify-start text-center">
+            {status === 'denied' && (
+              <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">
+                {serverError}
               </p>
             )}
             {status === 'success' && formMode === 'request' && (
@@ -278,10 +277,11 @@ export default function AuraApp() {
           onClick={() => {
             setFormMode(formMode === 'unlock' ? 'request' : 'unlock');
             setStatus('idle');
+            setServerError('');
             setKey('');
             setEmail('');
           }}
-          className="mt-16 font-mono text-[10px] text-zinc-400 hover:text-white transition-colors uppercase tracking-[0.2em] pb-1 flex items-center gap-2 group"
+          className="mt-12 font-mono text-[10px] text-zinc-400 hover:text-white transition-colors uppercase tracking-[0.2em] pb-1 flex items-center gap-2 group"
         >
           {formMode === 'unlock' ? (
             <><span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">BETA VERSION:</span> REQUEST EARLY ACCESS TO DROPCIRCLES</>
