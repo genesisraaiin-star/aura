@@ -1,10 +1,11 @@
 'use server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function submitWaitlist(fanEmail: string) {
   try {
+    // Moved INSIDE the function to guarantee it reads the live Vercel API key
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
     const { data, error } = await resend.emails.send({
       from: 'AURA DropCircles <onboarding@resend.dev>',
       to: 'genesisraaiin@gmail.com',
@@ -21,7 +22,7 @@ export async function submitWaitlist(fanEmail: string) {
       `
     });
     
-    // If Resend rejects the email (e.g., bad API key), send a failure signal
+    // Catch Resend rejections (like a bad API key) and send a fail signal so it doesn't hang
     if (error) {
       console.error("Resend API Error:", error);
       return { success: false };
