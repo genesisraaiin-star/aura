@@ -1,14 +1,13 @@
 'use server';
 import { Resend } from 'resend';
 
-// This securely accesses the hidden API key you put in Vercel
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function submitWaitlist(fanEmail: string) {
   try {
-    const data = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: 'AURA DropCircles <onboarding@resend.dev>',
-      to: 'GENESISRAAIIN@GMAIL.COM', // <--- CHANGE THIS TO YOUR RESEND ACCOUNT EMAIL
+      to: 'genesisraaiin@gmail.com',
       subject: 'New Waitlist Access Request for EIGHT',
       html: `
         <div style="font-family: monospace; background: #000; color: #fff; padding: 40px;">
@@ -22,8 +21,15 @@ export async function submitWaitlist(fanEmail: string) {
       `
     });
     
+    // If Resend rejects the email (e.g., bad API key), send a failure signal
+    if (error) {
+      console.error("Resend API Error:", error);
+      return { success: false };
+    }
+
     return { success: true };
   } catch (error) {
-    return { success: false, error };
+    console.error("Server Crash:", error);
+    return { success: false };
   }
 }
