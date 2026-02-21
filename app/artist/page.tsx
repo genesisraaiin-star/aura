@@ -41,14 +41,19 @@ export default function VisionaryHub() {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (sessionError) throw sessionError;
-      
-      // THE IRON-CLAD SECURITY GATE
-      if (!session || !session.user || !session.user.email) {
+      // THE IRON-CLAD ANTI-FREEZE GATE
+      if (sessionError || !session || !session.user || !session.user.email) {
         setIsRedirecting(true);
-        await supabase.auth.signOut();
-        router.replace('/artist');
-        return; // Stops the Hub from loading
+        // Fire and forget signout, don't await so it can't hang
+        supabase.auth.signOut().catch(() => {});
+        
+        // Nuclear cache wipe & Hard Reroute
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/artist'; 
+        }
+        return; 
       }
       
       setUser(session.user);
@@ -97,8 +102,13 @@ export default function VisionaryHub() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.replace('/artist');
+    setIsRedirecting(true);
+    supabase.auth.signOut().catch(() => {}); // Don't let it hang
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/artist'; // Hard Reroute
+    }
   };
 
   const createCircle = async (e: React.FormEvent) => {
@@ -269,14 +279,24 @@ export default function VisionaryHub() {
     document.body.removeChild(link);
   };
 
-  // BLOCK THE GHOST RENDER
   if (isLoading) return <div className="min-h-screen bg-[#f4f4f0] flex items-center justify-center font-mono text-xs uppercase tracking-widest text-zinc-500">Initializing Workspace...</div>;
   
+  // THE NEW FAILSAFE REDIRECT SCREEN
   if (isRedirecting || !user) return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center font-mono text-[10px] uppercase tracking-[0.3em] text-center p-6">
       <Lock size={32} className="mb-6 opacity-50" />
       <p>SESSION EXPIRED OR UNAUTHORIZED.</p>
-      <p className="mt-4 text-zinc-500">REROUTING TO SECURE TERMINAL...</p>
+      <p className="mt-4 text-zinc-500 mb-8">REROUTING TO SECURE TERMINAL...</p>
+      <button 
+        onClick={() => {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/artist';
+        }}
+        className="border-2 border-white px-6 py-3 hover:bg-white hover:text-black transition-colors font-bold"
+      >
+        FORCE REROUTE
+      </button>
     </div>
   );
 
