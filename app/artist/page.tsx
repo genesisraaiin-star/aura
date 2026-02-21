@@ -100,6 +100,19 @@ export default function VisionaryHub() {
     e.preventDefault();
     if (!newCircleTitle || circles.length >= 3) return;
 
+    // --- THE SAFETY NET FIX ---
+    let currentUserId = user?.id;
+    if (!currentUserId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        alert("YOUR SECURE SESSION HAS EXPIRED. PLEASE LOG OUT AND LOG BACK IN.");
+        return;
+      }
+      currentUserId = session.user.id;
+      setUser(session.user);
+    }
+    // --------------------------
+
     const capacity = parseInt(newCircleCapacity);
     if (isNaN(capacity) || capacity < 1) {
       alert("CAPACITY MUST BE AT LEAST 1.");
@@ -109,7 +122,7 @@ export default function VisionaryHub() {
     try {
       const { data, error } = await supabase
         .from('circles')
-        .insert([{ title: newCircleTitle, max_capacity: capacity, is_live: false, artist_id: user.id }])
+        .insert([{ title: newCircleTitle, max_capacity: capacity, is_live: false, artist_id: currentUserId }])
         .select()
         .single();
 
@@ -141,7 +154,6 @@ export default function VisionaryHub() {
     }
   };
 
-  // --- NEW: EDIT CAPACITY FUNCTION ---
   const editCapacity = async () => {
     const newCapStr = window.prompt("ENTER NEW MAX CAPACITY (Spots):", activeCircle.max_capacity?.toString() || "100");
     if (!newCapStr) return;
@@ -165,7 +177,6 @@ export default function VisionaryHub() {
     }
   };
 
-  // --- NEW: DELETE CIRCLE FUNCTION ---
   const deleteCircle = async () => {
     const confirmDelete = window.confirm(`WARNING: ARE YOU SURE YOU WANT TO PERMANENTLY DELETE "${activeCircle.title}"?\n\nThis will destroy the vault, clear the guestlist, and free up 1 slot.`);
     if (!confirmDelete) return;
@@ -371,7 +382,6 @@ export default function VisionaryHub() {
                   <div className="flex items-center gap-4">
                     <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight">{activeCircle.title}</h1>
                     
-                    {/* NEW: THE COMMAND ICONS (Rename, Edit Scarcity, Delete) */}
                     <div className="flex items-center gap-1 mt-1">
                       <button onClick={renameCircle} className="text-zinc-300 hover:text-black transition-colors p-2" title="Rename Circle">
                         <Edit2 size={18} />
