@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 
 export async function submitWaitlist(fanEmail: string) {
   try {
-    // Moved INSIDE the function to guarantee it reads the live Vercel API key
+    // THIS LINE MUST BE INSIDE THE FUNCTION TO READ VERCEL'S VAULT PROPERLY
     const resend = new Resend(process.env.RESEND_API_KEY);
     
     const { data, error } = await resend.emails.send({
@@ -22,15 +22,14 @@ export async function submitWaitlist(fanEmail: string) {
       `
     });
     
-    // Catch Resend rejections (like a bad API key) and send a fail signal so it doesn't hang
     if (error) {
       console.error("Resend API Error:", error);
-      return { success: false };
+      return { success: false, errorMessage: `RESEND API: ${error.message}` };
     }
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Server Crash:", error);
-    return { success: false };
+    return { success: false, errorMessage: `SERVER ERROR: ${error.message || "Unknown crash"}` };
   }
 }
