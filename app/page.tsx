@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
 
-// The new geometric Infinity/Connection Logo
+// The geometric Infinity/Connection Logo
 const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
   <svg viewBox="0 0 60 40" fill="none" stroke={stroke} strokeWidth="2" className={className}>
     <circle cx="22" cy="20" r="14" />
@@ -11,25 +11,41 @@ const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" })
 );
 
 export default function AuraApp() {
+  // Gate State
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [formMode, setFormMode] = useState<'unlock' | 'request'>('unlock');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'denied' | 'success'>('idle');
+  
+  // Inputs
   const [key, setKey] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'denied'>('idle');
+  const [email, setEmail] = useState('');
+
+  // Dashboard State
   const [activeTab, setActiveTab] = useState('drop');
 
-  const handleAccess = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!key) return;
     
-    setStatus('loading');
-    
-    setTimeout(() => {
-      const enteredKey = key.trim().toUpperCase();
-      if (enteredKey === 'EIGHT' || enteredKey === 'NOCHECK') {
-        setIsUnlocked(true);
-      } else {
-        setStatus('denied');
-      }
-    }, 1200);
+    if (formMode === 'unlock') {
+      if (!key) return;
+      setStatus('loading');
+      setTimeout(() => {
+        const enteredKey = key.trim().toUpperCase();
+        if (enteredKey === 'EIGHT' || enteredKey === 'NOCHECK') {
+          setIsUnlocked(true);
+        } else {
+          setStatus('denied');
+        }
+      }, 1200);
+    } else {
+      if (!email) return;
+      setStatus('loading');
+      setTimeout(() => {
+        // Simulates a successful email capture to a database
+        setStatus('success');
+        setEmail('');
+      }, 1500);
+    }
   };
 
   // ==========================================
@@ -169,7 +185,7 @@ export default function AuraApp() {
   // VIEW 2: THE HYPE GATE (Locked State - Apple/Monolithic Vibe)
   // ==========================================
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative overflow-hidden">
       
       {/* Top Floating Logo */}
       <div className="absolute top-12 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-1000">
@@ -193,41 +209,80 @@ export default function AuraApp() {
           </h2>
         </div>
 
-        {/* Terminal Input - Tightly Controlled */}
-        <form onSubmit={handleAccess} className="w-full max-w-sm flex flex-col gap-6">
-          <input 
-            type="text" 
-            placeholder="ENTER ACCESS KEY" 
-            className="w-full bg-transparent border-b-2 border-zinc-800 py-4 font-mono text-center text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700 text-white"
-            value={key}
-            onChange={(e) => {
-              setKey(e.target.value);
-              setStatus('idle');
-            }}
-          />
+        {/* Dynamic Input Form */}
+        <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-6 relative">
+          
+          <div className="relative overflow-hidden">
+            {formMode === 'unlock' ? (
+              <input 
+                key="unlock-input"
+                type="text" 
+                placeholder="ENTER ACCESS KEY" 
+                className="w-full bg-transparent border-b-2 border-zinc-800 py-4 font-mono text-center text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700 text-white animate-in fade-in slide-in-from-bottom-2 duration-300"
+                value={key}
+                onChange={(e) => {
+                  setKey(e.target.value);
+                  setStatus('idle');
+                }}
+              />
+            ) : (
+              <input 
+                key="request-input"
+                type="email" 
+                placeholder="ENTER EMAIL ADDRESS" 
+                className="w-full bg-transparent border-b-2 border-zinc-800 py-4 font-mono text-center text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700 text-white animate-in fade-in slide-in-from-bottom-2 duration-300"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setStatus('idle');
+                }}
+                required
+              />
+            )}
+          </div>
           
           <button 
             type="submit"
-            disabled={status === 'loading'}
+            disabled={status === 'loading' || status === 'success'}
             className="w-full bg-white text-black py-4 font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            {status === 'loading' ? 'VERIFYING...' : 'UNLOCK'}
+            {status === 'loading' ? 'PROCESSING...' : 
+             status === 'success' ? 'REQUEST RECEIVED' :
+             formMode === 'unlock' ? 'UNLOCK' : 'SUBMIT REQUEST'}
           </button>
 
           <div className="h-4 flex justify-center">
-            {status === 'denied' && (
+            {status === 'denied' && formMode === 'unlock' && (
               <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-pulse">
                 ACCESS DENIED.
+              </p>
+            )}
+            {status === 'success' && formMode === 'request' && (
+              <p className="font-mono text-[10px] text-[#4ade80] uppercase tracking-widest animate-pulse">
+                POSITION SECURED. WE WILL BE IN TOUCH.
               </p>
             )}
           </div>
         </form>
 
-        <button className="mt-16 font-mono text-[10px] text-zinc-400 hover:text-white transition-colors uppercase tracking-[0.2em] pb-1 flex items-center gap-2 group">
-          <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">BETA VERSION:</span> REQUEST EARLY ACCESS TO DROPCIRCLES
+        {/* Bottom Toggle Button */}
+        <button 
+          onClick={() => {
+            setFormMode(formMode === 'unlock' ? 'request' : 'unlock');
+            setStatus('idle');
+            setKey('');
+            setEmail('');
+          }}
+          className="mt-16 font-mono text-[10px] text-zinc-400 hover:text-white transition-colors uppercase tracking-[0.2em] pb-1 flex items-center gap-2 group"
+        >
+          {formMode === 'unlock' ? (
+            <><span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">BETA VERSION:</span> REQUEST EARLY ACCESS TO DROPCIRCLES</>
+          ) : (
+            <><span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">HAVE A KEY?</span> UNLOCK DROPCIRCLES</>
+          )}
         </button>
-      </main>
 
+      </main>
     </div>
   );
 }
