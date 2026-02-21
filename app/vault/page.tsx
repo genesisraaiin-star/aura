@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { Upload, ArrowRight, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 
 // Connect to the Supabase Database
@@ -48,7 +49,7 @@ export default function ArtistVault() {
         .from('circles')
         .insert([{ 
           title: title, 
-          is_live: false // The track is locked until you flip the switch
+          is_live: false 
         }])
         .select()
         .single();
@@ -85,15 +86,16 @@ export default function ArtistVault() {
   return (
     <div className="min-h-screen bg-[#f4f4f0] text-black font-sans selection:bg-black selection:text-[#f4f4f0] pb-32 animate-in fade-in duration-1000">
       
+      {/* UPDATED NAVIGATION WITH LINKS */}
       <nav className="flex justify-between items-center px-6 py-4 border-b-2 border-black bg-white">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 hover:opacity-50 transition-opacity">
           <LinkedCirclesLogo className="w-10 h-6" stroke="black" />
           <span className="text-2xl font-serif tracking-tighter mt-1">AURA</span>
-        </div>
-        <div className="flex gap-4 items-center">
-          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500 hidden md:block">
-            Artist Protocol Active
-          </span>
+        </Link>
+        <div className="flex gap-6 items-center">
+          <Link href="/" className="text-[10px] font-mono uppercase tracking-[0.2em] text-black hover:text-[#ff3300] transition-colors hidden md:block font-bold">
+            ← Return to Control Room
+          </Link>
           <div className="w-10 h-10 bg-black text-white flex items-center justify-center text-xs font-bold uppercase tracking-widest">
             ART
           </div>
