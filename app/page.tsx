@@ -233,77 +233,91 @@ export default function AuraApp() {
     );
   }
 
+  // ==========================================
+  // VIEW 2: THE HYPE GATE
+  // ==========================================
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center py-24 px-6 relative overflow-y-auto">
+      
       <div className="absolute top-12 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-1000">
         <LinkedCirclesLogo className="w-16 h-10 text-white opacity-90" />
       </div>
 
-      <main className="w-full max-w-3xl mx-auto flex flex-col items-center mt-8 animate-in fade-in duration-1000 delay-300 fill-mode-both">
-        <div className="text-center mb-24 space-y-16">
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.1]">
+      <main className="w-full max-w-4xl mx-auto flex flex-col items-center mt-12 animate-in fade-in duration-1000 delay-300 fill-mode-both">
+        
+        {/* HERO SECTION */}
+        <div className="text-center mb-40 space-y-16">
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[1.05]">
             <span className="text-zinc-600 block hover:text-zinc-400 transition-colors duration-500">No platform.</span>
             <span className="text-zinc-600 block hover:text-zinc-400 transition-colors duration-500">No permission.</span>
             <span className="text-zinc-600 block hover:text-zinc-400 transition-colors duration-500">No performance.</span>
           </h2>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.1]">
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[1.05]">
             <span className="text-white block drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">You create.</span>
             <span className="text-white block drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">You invite.</span>
             <span className="text-white block drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">You collect.</span>
           </h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-6 relative">
-          <div className="relative overflow-hidden">
-            {formMode === 'unlock' ? (
-              <input 
-                type="text" 
-                placeholder="ENTER ACCESS KEY" 
-                className="w-full bg-transparent border-b-2 border-zinc-800 py-4 font-mono text-center text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700 text-white animate-in fade-in slide-in-from-bottom-2 duration-300"
-                value={key}
-                onChange={(e) => { setKey(e.target.value); setStatus('idle'); setServerError(''); }}
-              />
-            ) : (
-              <input 
-                type="email" 
-                placeholder="ENTER EMAIL ADDRESS" 
-                className="w-full bg-transparent border-b-2 border-zinc-800 py-4 font-mono text-center text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700 text-white animate-in fade-in slide-in-from-bottom-2 duration-300"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setStatus('idle'); setServerError(''); }}
-                required
-              />
-            )}
-          </div>
-          
-          <button 
-            type="submit"
-            disabled={status === 'loading' || status === 'success'}
-            className="w-full bg-white text-black py-4 font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-          >
-            {status === 'loading' ? 'PROCESSING...' : status === 'success' ? 'REQUEST RECEIVED' : formMode === 'unlock' ? 'UNLOCK' : 'SUBMIT REQUEST'}
-          </button>
+        {/* INVITE ONLY SECTION */}
+        <div className="w-full max-w-2xl mx-auto flex flex-col items-center">
+          <h1 className="text-6xl md:text-[8rem] font-serif font-bold tracking-tighter mb-12">
+            INVITE ONLY
+          </h1>
 
-          <div className="h-10 flex flex-col items-center justify-start text-center">
-            {status === 'denied' && (
-              <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">{serverError}</p>
-            )}
-            {status === 'success' && formMode === 'request' && (
-              <p className="font-mono text-[10px] text-[#4ade80] uppercase tracking-widest animate-pulse">POSITION SECURED. WE WILL BE IN TOUCH.</p>
-            )}
-          </div>
-        </form>
+          <div className="flex flex-col items-center text-center space-y-10 mb-16 w-full">
+            <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-400">
+              THE ECOSYSTEM IS CURRENTLY LOCKED.
+            </p>
 
-        <button 
-          onClick={() => { setFormMode(formMode === 'unlock' ? 'request' : 'unlock'); setStatus('idle'); setServerError(''); setKey(''); setEmail(''); }}
-          className="mt-12 font-mono text-[10px] text-zinc-400 hover:text-white transition-colors uppercase tracking-[0.2em] pb-1 flex items-center gap-2 group"
-        >
-          {formMode === 'unlock' ? (
-            <><span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">BETA VERSION:</span> REQUEST EARLY ACCESS</>
-          ) : (
-            <><span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">HAVE A KEY?</span> UNLOCK DROPCIRCLES</>
-          )}
-        </button>
-      </main>
-    </div>
-  );
-}
+            <div className="border-l border-zinc-700 pl-6 text-left space-y-4 py-2 mx-auto">
+              <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-300 leading-relaxed">
+                [01] A CLOSED-CIRCUIT<br/>INFRASTRUCTURE.
+              </p>
+              <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-300">
+                [02] ZERO LEAKS. ZERO ALGORITHMS.
+              </p>
+              <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-300">
+                [03] DIRECT-TO-VAULT DROPS.
+              </p>
+            </div>
+
+            <p className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-zinc-500 max-w-sm mx-auto leading-relaxed pt-6">
+              BETA ACCESS IS STRICTLY LIMITED TO 100 VISIONARIES.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-8 relative mt-4">
+            <div className="relative overflow-hidden">
+              {formMode === 'unlock' ? (
+                <input 
+                  type="text" 
+                  placeholder="ENTER ACCESS KEY" 
+                  className="w-full bg-transparent border-b border-zinc-700 py-4 font-mono text-center text-xs md:text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-600 text-white"
+                  value={key}
+                  onChange={(e) => { setKey(e.target.value); setStatus('idle'); setServerError(''); }}
+                />
+              ) : (
+                <input 
+                  type="email" 
+                  placeholder="ENTER EMAIL ADDRESS" 
+                  className="w-full bg-transparent border-b border-zinc-700 py-4 font-mono text-center text-xs md:text-sm uppercase tracking-[0.3em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-600 text-white"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setStatus('idle'); setServerError(''); }}
+                  required
+                />
+              )}
+            </div>
+            
+            <button 
+              type="submit"
+              disabled={status === 'loading' || status === 'success'}
+              className="w-full bg-black text-white border border-white py-5 font-bold text-xs uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              {status === 'loading' ? 'PROCESSING...' : status === 'success' ? 'REQUEST RECEIVED' : formMode === 'unlock' ? 'UNLOCK' : 'SUBMIT REQUEST'}
+              {!status && <ArrowRight size={16} />}
+            </button>
+
+            <div className="h-4 flex flex-col items-center justify-start text-center">
+              {status === 'denied' && (
+                <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-in fade-in slide-in-from-top-1">{serverError}</p
