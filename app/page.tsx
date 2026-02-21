@@ -2,6 +2,14 @@
 import React, { useState } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
 
+// The new geometric Infinity/Connection Logo
+const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
+  <svg viewBox="0 0 60 40" fill="none" stroke={stroke} strokeWidth="2" className={className}>
+    <circle cx="22" cy="20" r="14" />
+    <circle cx="38" cy="20" r="14" />
+  </svg>
+);
+
 export default function AuraApp() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [key, setKey] = useState('');
@@ -31,8 +39,9 @@ export default function AuraApp() {
     return (
       <div className="min-h-screen bg-[#f4f4f0] text-black font-sans selection:bg-black selection:text-[#f4f4f0] pb-32 animate-in fade-in duration-1000">
         <nav className="flex justify-between items-center px-6 py-4 border-b-2 border-black bg-white">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-serif tracking-tighter">∞ AURA</span>
+          <div className="flex items-center gap-3">
+            <LinkedCirclesLogo className="w-10 h-6" stroke="black" />
+            <span className="text-2xl font-serif tracking-tighter mt-1">AURA</span>
           </div>
           <div className="flex gap-8 text-xs font-bold uppercase tracking-[0.2em] hidden md:flex">
             <button onClick={() => setActiveTab('drop')} className={`hover:text-red-600 transition-colors ${activeTab === 'drop' && 'text-red-600 border-b-2 border-red-600'}`}>The Drop</button>
@@ -162,10 +171,15 @@ export default function AuraApp() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative">
       
-      <main className="w-full max-w-3xl mx-auto flex flex-col items-center mt-[-5vh] animate-in fade-in duration-1000">
+      {/* Top Floating Logo */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-1000">
+        <LinkedCirclesLogo className="w-16 h-10 text-white opacity-90" />
+      </div>
+
+      <main className="w-full max-w-3xl mx-auto flex flex-col items-center mt-8 animate-in fade-in duration-1000 delay-300 fill-mode-both">
         
         {/* The Manifesto - Big, Bold, Unified */}
-        <div className="text-center mb-20 space-y-12">
+        <div className="text-center mb-24 space-y-16">
           <h2 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.1]">
             <span className="text-zinc-600 block hover:text-zinc-400 transition-colors duration-500">No platform.</span>
             <span className="text-zinc-600 block hover:text-zinc-400 transition-colors duration-500">No permission.</span>
