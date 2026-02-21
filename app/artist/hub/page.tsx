@@ -21,12 +21,13 @@ export default function VisionaryHub() {
   const [user, setUser] = useState<any>(null);
   const [circles, setCircles] = useState<any[]>([]);
   const [artifacts, setArtifacts] = useState<any[]>([]);
-  const [fans, setFans] = useState<any[]>([]); // New State for Emails
+  const [fans, setFans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // UI States
   const [activeCircle, setActiveCircle] = useState<any>(null);
   const [newCircleTitle, setNewCircleTitle] = useState('');
+  const [newCircleCapacity, setNewCircleCapacity] = useState('100'); // SCARCITY STATE
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'artifacts' | 'guestlist'>('artifacts');
 
@@ -59,9 +60,8 @@ export default function VisionaryHub() {
 
   const handleSelectCircle = async (circle: any) => {
     setActiveCircle(circle);
-    setActiveTab('artifacts'); // Reset to artifacts view when changing circles
+    setActiveTab('artifacts');
     
-    // 1. Fetch Artifacts (Music/Video)
     const { data: artifactData } = await supabase
       .from('artifacts')
       .select('*')
@@ -69,7 +69,6 @@ export default function VisionaryHub() {
       .order('created_at', { ascending: true });
     setArtifacts(artifactData || []);
 
-    // 2. Fetch the Fan Roster (Emails)
     const { data: fanData } = await supabase
       .from('fan_roster')
       .select('*')
@@ -87,15 +86,23 @@ export default function VisionaryHub() {
     e.preventDefault();
     if (!newCircleTitle || circles.length >= 3) return;
 
+    const capacity = parseInt(newCircleCapacity);
+    if (isNaN(capacity) || capacity < 1) {
+      alert("CAPACITY MUST BE AT LEAST 1.");
+      return;
+    }
+
     const { data, error } = await supabase
       .from('circles')
-      .insert([{ title: newCircleTitle, is_live: false, artist_id: user.id }])
+      // WE NOW INJECT THE CUSTOM CAPACITY INTO THE DATABASE
+      .insert([{ title: newCircleTitle, max_capacity: capacity, is_live: false, artist_id: user.id }])
       .select()
       .single();
 
     if (!error && data) {
       setCircles([data, ...circles]);
       setNewCircleTitle('');
+      setNewCircleCapacity('100');
       handleSelectCircle(data);
     }
   };
@@ -174,7 +181,6 @@ export default function VisionaryHub() {
     alert("INVITE LINK COPIED TO CLIPBOARD.");
   };
 
-  // Raw CSV Exporter Function
   const exportToCSV = () => {
     if (fans.length === 0) return;
     const headers = ['Email', 'Date Unlocked'];
@@ -198,8 +204,6 @@ export default function VisionaryHub() {
 
   return (
     <div className="min-h-screen bg-[#f4f4f0] text-black font-sans selection:bg-black selection:text-[#f4f4f0] pb-32 animate-in fade-in duration-500">
-      
-      {/* Top Navigation */}
       <nav className="flex justify-between items-center px-6 py-4 border-b-2 border-black bg-white">
         <div className="flex items-center gap-3">
           <LinkedCirclesLogo className="w-10 h-6" stroke="black" />
@@ -217,7 +221,6 @@ export default function VisionaryHub() {
 
       <main className="max-w-6xl mx-auto pt-16 px-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        {/* LEFT PANEL: CIRCLE MANAGER */}
         <div className="lg:col-span-1 space-y-8">
           <div>
             <h2 className="font-serif text-3xl font-bold tracking-tight mb-2">DropCircles</h2>
@@ -247,14 +250,26 @@ export default function VisionaryHub() {
 
             {circles.length < 3 && (
               <form onSubmit={createCircle} className="border-2 border-dashed border-zinc-400 bg-transparent p-4 flex flex-col gap-4 focus-within:border-black transition-colors mt-6">
-                <input 
-                  type="text" 
-                  placeholder="NEW CIRCLE NAME" 
-                  required
-                  className="w-full bg-transparent border-b-2 border-zinc-300 py-2 font-mono text-xs uppercase tracking-widest focus:outline-none focus:border-black transition-colors"
-                  value={newCircleTitle}
-                  onChange={(e) => setNewCircleTitle(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="CIRCLE NAME" 
+                    required
+                    className="w-full bg-transparent border-b-2 border-zinc-300 py-2 font-mono text-xs uppercase tracking-widest focus:outline-none focus:border-black transition-colors"
+                    value={newCircleTitle}
+                    onChange={(e) => setNewCircleTitle(e.target.value)}
+                  />
+                  <input 
+                    type="number" 
+                    placeholder="SPOTS" 
+                    required
+                    min="1"
+                    title="Max Capacity"
+                    className="w-20 bg-transparent border-b-2 border-zinc-300 py-2 font-mono text-xs text-center uppercase tracking-widest focus:outline-none focus:border-black transition-colors"
+                    value={newCircleCapacity}
+                    onChange={(e) => setNewCircleCapacity(e.target.value)}
+                  />
+                </div>
                 <button type="submit" className="w-full bg-zinc-200 text-black py-3 font-bold text-[10px] uppercase tracking-widest hover:bg-black hover:text-white transition-colors flex items-center justify-center gap-2">
                   <Plus size={14} /> Forge Circle
                 </button>
@@ -263,7 +278,6 @@ export default function VisionaryHub() {
           </div>
         </div>
 
-        {/* RIGHT PANEL: VAULT INTERIOR */}
         <div className="lg:col-span-3">
           {!activeCircle ? (
             <div className="h-full min-h-[500px] border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center text-center p-12 bg-white/50">
@@ -274,7 +288,6 @@ export default function VisionaryHub() {
           ) : (
             <div className="border-2 border-black bg-white p-8 md:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col min-h-[600px]">
               
-              {/* Circle Header */}
               <div className="flex flex-col md:flex-row md:items-start justify-between mb-8 gap-6">
                 <div className="group relative">
                   <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mb-2">ACTIVE DIRECTORY</p>
@@ -303,7 +316,6 @@ export default function VisionaryHub() {
                 </div>
               </div>
 
-              {/* TABS: ARTIFACTS VS GUESTLIST */}
               <div className="flex gap-8 border-b-2 border-zinc-200 mb-8 mt-4">
                 <button 
                   onClick={() => setActiveTab('artifacts')} 
@@ -319,7 +331,6 @@ export default function VisionaryHub() {
                 </button>
               </div>
 
-              {/* TAB CONTENT: ARTIFACTS */}
               {activeTab === 'artifacts' && (
                 <div className="flex-1 space-y-4 animate-in fade-in duration-300">
                   <div className="flex items-center justify-between mb-6">
@@ -363,7 +374,6 @@ export default function VisionaryHub() {
                 </div>
               )}
 
-              {/* TAB CONTENT: GUESTLIST */}
               {activeTab === 'guestlist' && (
                 <div className="flex-1 space-y-4 animate-in fade-in duration-300">
                   <div className="flex items-center justify-between mb-6">
