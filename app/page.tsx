@@ -26,11 +26,9 @@ export default function AuraApp() {
   const [email, setEmail] = useState('');
   const [activeTab, setActiveTab] = useState('drop');
 
-  // New State for the Control Room
   const [vaultTracks, setVaultTracks] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
-  // Fetch Tracks when the Dashboard Unlocks
   useEffect(() => {
     if (isUnlocked && activeTab === 'drop') {
       fetchVaultTracks();
@@ -54,7 +52,6 @@ export default function AuraApp() {
     }
   };
 
-  // The Manual Trigger to turn a track LIVE
   const triggerDrop = async (circleId: string, trackTitle: string) => {
     const confirmDrop = window.confirm(`ARE YOU SURE YOU WANT TO MAKE "${trackTitle}" LIVE?`);
     if (!confirmDrop) return;
@@ -68,9 +65,7 @@ export default function AuraApp() {
       if (error) throw error;
       
       alert(`"${trackTitle}" IS NOW LIVE.`);
-      fetchVaultTracks(); // Refresh the list
-      
-      // NEXT STEP: Trigger the EmailJS blast to the fan roster here!
+      fetchVaultTracks(); 
       
     } catch (error) {
       console.error("Failed to make live:", error);
@@ -82,13 +77,11 @@ export default function AuraApp() {
     e.preventDefault();
     setServerError('');
     
-    // Master Access for Artist (Bypasses the code checker)
     if (formMode === 'unlock' && key.trim().toUpperCase() === 'EIGHT') {
       setIsUnlocked(true);
       return;
     }
 
-    // Standard Fan Hype Gate Logic
     if (formMode === 'unlock') {
       if (!key) return;
       setStatus('loading');
@@ -125,7 +118,6 @@ export default function AuraApp() {
         setServerError('NETWORK ERROR. PLEASE RETRY.');
       }
     } else {
-      // Email Waitlist
       if (!email) return;
       setStatus('loading');
       try {
@@ -154,9 +146,6 @@ export default function AuraApp() {
     }
   };
 
-  // ==========================================
-  // VIEW 1: THE DASHBOARD (Unlocked State)
-  // ==========================================
   if (isUnlocked) {
     return (
       <div className="min-h-screen bg-[#f4f4f0] text-black font-sans selection:bg-black selection:text-[#f4f4f0] pb-32 animate-in fade-in duration-1000">
@@ -226,7 +215,6 @@ export default function AuraApp() {
             </div>
           )}
 
-          {/* Guestlist and Vault Tabs remain the same for now */}
           {activeTab === 'guestlist' && (
              <div className="p-8 text-center font-mono text-xs uppercase tracking-widest text-zinc-500">GUESTLIST DATA MIGRATING...</div>
           )}
@@ -245,12 +233,8 @@ export default function AuraApp() {
     );
   }
 
-  // ==========================================
-  // VIEW 2: THE HYPE GATE
-  // ==========================================
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative overflow-hidden">
-      
       <div className="absolute top-12 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-1000">
         <LinkedCirclesLogo className="w-16 h-10 text-white opacity-90" />
       </div>
@@ -311,4 +295,15 @@ export default function AuraApp() {
 
         <button 
           onClick={() => { setFormMode(formMode === 'unlock' ? 'request' : 'unlock'); setStatus('idle'); setServerError(''); setKey(''); setEmail(''); }}
-          className="mt-12 font-mono text-[10px] text-zinc-400 hover:text-white transition-colors
+          className="mt-12 font-mono text-[10px] text-zinc-400 hover:text-white transition-colors uppercase tracking-[0.2em] pb-1 flex items-center gap-2 group"
+        >
+          {formMode === 'unlock' ? (
+            <><span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">BETA VERSION:</span> REQUEST EARLY ACCESS</>
+          ) : (
+            <><span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">HAVE A KEY?</span> UNLOCK DROPCIRCLES</>
+          )}
+        </button>
+      </main>
+    </div>
+  );
+}
