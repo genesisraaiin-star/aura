@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Trash2 } from 'lucide-react';
+import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Users, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
@@ -21,18 +21,19 @@ export default function VisionaryHub() {
   const [user, setUser] = useState<any>(null);
   const [circles, setCircles] = useState<any[]>([]);
   const [artifacts, setArtifacts] = useState<any[]>([]);
+  const [fans, setFans] = useState<any[]>([]); // New State for Emails
   const [isLoading, setIsLoading] = useState(true);
   
   // UI States
   const [activeCircle, setActiveCircle] = useState<any>(null);
   const [newCircleTitle, setNewCircleTitle] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'artifacts' | 'guestlist'>('artifacts');
 
   useEffect(() => {
     checkUserAndFetchCircles();
   }, []);
 
-  // Fetch the logged-in visionary and their circles
   const checkUserAndFetchCircles = async () => {
     setIsLoading(true);
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -56,23 +57,31 @@ export default function VisionaryHub() {
     setIsLoading(false);
   };
 
-  // Fetch artifacts when a circle is selected
   const handleSelectCircle = async (circle: any) => {
     setActiveCircle(circle);
-    const { data } = await supabase
+    setActiveTab('artifacts'); // Reset to artifacts view when changing circles
+    
+    // 1. Fetch Artifacts (Music/Video)
+    const { data: artifactData } = await supabase
       .from('artifacts')
       .select('*')
       .eq('circle_id', circle.id)
       .order('created_at', { ascending: true });
-    setArtifacts(data || []);
+    setArtifacts(artifactData || []);
+
+    // 2. Fetch the Fan Roster (Emails)
+    const { data: fanData } = await supabase
+      .from('fan_roster')
+      .select('*')
+      .eq('circle_id', circle.id)
+      .order('created_at', { ascending: false });
+    setFans(fanData || []);
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/artist');
   };
-
-  // --- CORE FUNCTIONS ---
 
   const createCircle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,11 +144,9 @@ export default function VisionaryHub() {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `artifacts/${fileName}`;
 
-      // 1. Upload to Storage
       const { error: uploadError } = await supabase.storage.from('vault').upload(filePath, file);
       if (uploadError) throw uploadError;
 
-      // 2. Link to Database
       const { data, error: dbError } = await supabase
         .from('artifacts')
         .insert([{
@@ -162,10 +169,29 @@ export default function VisionaryHub() {
   };
 
   const copyInviteLink = () => {
-    // We will build the /drop/[id] page next to act as the fan receiver
     const link = `${window.location.origin}/drop/${activeCircle.id}`;
     navigator.clipboard.writeText(link);
     alert("INVITE LINK COPIED TO CLIPBOARD.");
+  };
+
+  // Raw CSV Exporter Function
+  const exportToCSV = () => {
+    if (fans.length === 0) return;
+    const headers = ['Email', 'Date Unlocked'];
+    const csvContent = [
+      headers.join(','),
+      ...fans.map(f => `${f.email},${new Date(f.created_at).toLocaleDateString()}`)
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${activeCircle.title.replace(/\s+/g, '_')}_GUESTLIST.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (isLoading) return <div className="min-h-screen bg-[#f4f4f0] flex items-center justify-center font-mono text-xs uppercase tracking-widest text-zinc-500">Initializing Workspace...</div>;
@@ -249,7 +275,7 @@ export default function VisionaryHub() {
             <div className="border-2 border-black bg-white p-8 md:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col min-h-[600px]">
               
               {/* Circle Header */}
-              <div className="flex flex-col md:flex-row md:items-start justify-between mb-12 gap-6 border-b-2 border-zinc-100 pb-8">
+              <div className="flex flex-col md:flex-row md:items-start justify-between mb-8 gap-6">
                 <div className="group relative">
                   <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mb-2">ACTIVE DIRECTORY</p>
                   <div className="flex items-center gap-4">
@@ -277,47 +303,99 @@ export default function VisionaryHub() {
                 </div>
               </div>
 
-              {/* Artifacts List */}
-              <div className="flex-1 space-y-4">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">Encrypted Artifacts</h3>
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      accept="audio/*, video/*" 
-                      onChange={handleFileUpload}
-                      disabled={isUploading}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                    />
-                    <button className="text-[10px] font-bold font-mono uppercase tracking-widest text-white bg-black px-4 py-2 flex items-center gap-2 hover:bg-[#ff3300] transition-colors">
-                      {isUploading ? 'ENCRYPTING...' : <><Upload size={14} /> Upload Audio/Video</>}
-                    </button>
+              {/* TABS: ARTIFACTS VS GUESTLIST */}
+              <div className="flex gap-8 border-b-2 border-zinc-200 mb-8 mt-4">
+                <button 
+                  onClick={() => setActiveTab('artifacts')} 
+                  className={`font-mono text-xs font-bold uppercase tracking-widest pb-3 transition-colors ${activeTab === 'artifacts' ? 'text-black border-b-4 border-black -mb-[2px]' : 'text-zinc-400 hover:text-black'}`}
+                >
+                  Artifacts ({artifacts.length})
+                </button>
+                <button 
+                  onClick={() => setActiveTab('guestlist')} 
+                  className={`font-mono text-xs font-bold uppercase tracking-widest pb-3 transition-colors flex items-center gap-2 ${activeTab === 'guestlist' ? 'text-black border-b-4 border-black -mb-[2px]' : 'text-zinc-400 hover:text-black'}`}
+                >
+                  Guestlist ({fans.length}/{activeCircle.max_capacity || 100})
+                </button>
+              </div>
+
+              {/* TAB CONTENT: ARTIFACTS */}
+              {activeTab === 'artifacts' && (
+                <div className="flex-1 space-y-4 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">Encrypted Artifacts</h3>
+                    <div className="relative">
+                      <input 
+                        type="file" 
+                        accept="audio/*, video/*" 
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                      <button className="text-[10px] font-bold font-mono uppercase tracking-widest text-white bg-black px-4 py-2 flex items-center gap-2 hover:bg-[#ff3300] transition-colors">
+                        {isUploading ? 'ENCRYPTING...' : <><Upload size={14} /> Upload Audio/Video</>}
+                      </button>
+                    </div>
                   </div>
-                </div>
-                
-                {artifacts.length === 0 ? (
-                  <div className="py-20 flex flex-col items-center justify-center bg-zinc-50 border-2 border-dashed border-zinc-200 text-zinc-400">
-                    <Music size={32} className="mb-4 opacity-50" />
-                    <p className="font-mono text-[10px] uppercase tracking-[0.2em]">VAULT IS CURRENTLY EMPTY</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {artifacts.map((artifact) => (
-                      <div key={artifact.id} className="flex items-center justify-between p-4 border-2 border-black hover:bg-zinc-50 transition-colors group">
-                        <div className="flex items-center gap-4 truncate">
-                          <div className="w-10 h-10 bg-black text-white flex items-center justify-center flex-shrink-0">
-                            {artifact.file_type?.includes('video') ? <Video size={16} /> : <Music size={16} />}
-                          </div>
-                          <div>
-                            <p className="font-bold text-sm uppercase tracking-tight truncate">{artifact.title}</p>
-                            <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 mt-1">{artifact.file_type}</p>
+                  
+                  {artifacts.length === 0 ? (
+                    <div className="py-20 flex flex-col items-center justify-center bg-zinc-50 border-2 border-dashed border-zinc-200 text-zinc-400">
+                      <Music size={32} className="mb-4 opacity-50" />
+                      <p className="font-mono text-[10px] uppercase tracking-[0.2em]">VAULT IS CURRENTLY EMPTY</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {artifacts.map((artifact) => (
+                        <div key={artifact.id} className="flex items-center justify-between p-4 border-2 border-black hover:bg-zinc-50 transition-colors group">
+                          <div className="flex items-center gap-4 truncate">
+                            <div className="w-10 h-10 bg-black text-white flex items-center justify-center flex-shrink-0">
+                              {artifact.file_type?.includes('video') ? <Video size={16} /> : <Music size={16} />}
+                            </div>
+                            <div>
+                              <p className="font-bold text-sm uppercase tracking-tight truncate">{artifact.title}</p>
+                              <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 mt-1">{artifact.file_type}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB CONTENT: GUESTLIST */}
+              {activeTab === 'guestlist' && (
+                <div className="flex-1 space-y-4 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">Captured Assets</h3>
+                    <button 
+                      onClick={exportToCSV} 
+                      disabled={fans.length === 0}
+                      className="text-[10px] font-bold font-mono uppercase tracking-widest text-white bg-black px-4 py-2 flex items-center gap-2 hover:bg-[#ff3300] transition-colors disabled:opacity-50"
+                    >
+                      <Download size={14} /> Export to CSV
+                    </button>
                   </div>
-                )}
-              </div>
+                  
+                  {fans.length === 0 ? (
+                    <div className="py-20 flex flex-col items-center justify-center bg-zinc-50 border-2 border-dashed border-zinc-200 text-zinc-400">
+                      <Users size={32} className="mb-4 opacity-50" />
+                      <p className="font-mono text-[10px] uppercase tracking-[0.2em]">THE GUESTLIST IS EMPTY</p>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-black bg-white max-h-[400px] overflow-y-auto">
+                      {fans.map((fan) => (
+                        <div key={fan.id} className="flex items-center justify-between p-4 border-b-2 border-zinc-100 last:border-b-0 hover:bg-zinc-50 transition-colors">
+                          <span className="font-mono text-xs uppercase tracking-widest font-bold">{fan.email}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                            {new Date(fan.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
             </div>
           )}
