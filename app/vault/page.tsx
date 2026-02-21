@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Upload, Clock, ArrowRight, Lock } from 'lucide-react';
+import { Upload, ArrowRight, Lock } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
 // Connect to the Supabase Database
@@ -17,7 +17,6 @@ const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" })
 
 export default function ArtistVault() {
   const [title, setTitle] = useState('');
-  const [releaseDate, setReleaseDate] = useState('');
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [visualFile, setVisualFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -44,12 +43,12 @@ export default function ArtistVault() {
 
       if (uploadError) throw uploadError;
 
-      // 2. CREATE THE DROPCIRCLE EVENT IN THE DATABASE
+      // 2. CREATE THE DROPCIRCLE EVENT (SET TO 'STANDBY / NOT LIVE')
       const { data: circleData, error: circleError } = await supabase
         .from('circles')
         .insert([{ 
           title: title, 
-          go_live_at: new Date(releaseDate).toISOString() 
+          is_live: false // The track is locked until you flip the switch
         }])
         .select()
         .single();
@@ -72,9 +71,8 @@ export default function ArtistVault() {
       setAudioFile(null);
       setVisualFile(null);
       setTitle('');
-      setReleaseDate('');
       
-      alert("ARTIFACT SECURED. THE COUNTDOWN HAS BEGUN.");
+      alert("ARTIFACT SECURED ON STANDBY. AWAITING MANUAL DROP.");
       
     } catch (error: any) {
       console.error("Upload Failed:", error);
@@ -128,22 +126,6 @@ export default function ArtistVault() {
             />
           </div>
 
-          <div className="space-y-4">
-            <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500 block">
-              [02] Communion Timer (Go-Live)
-            </label>
-            <div className="relative">
-              <Clock className="absolute left-0 top-1/2 -translate-y-1/2 text-black" size={24} />
-              <input 
-                type="datetime-local" 
-                required
-                className="w-full bg-transparent border-b-4 border-black py-4 pl-10 font-mono text-lg uppercase tracking-widest focus:outline-none focus:border-zinc-400 transition-colors"
-                value={releaseDate}
-                onChange={(e) => setReleaseDate(e.target.value)}
-              />
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
             
             <div className="border-4 border-black bg-white p-8 hover:bg-black hover:text-white transition-colors group cursor-pointer relative">
@@ -186,7 +168,7 @@ export default function ArtistVault() {
             disabled={isUploading}
             className="w-full bg-black text-white py-6 font-bold text-sm uppercase tracking-[0.3em] hover:bg-zinc-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50 mt-12"
           >
-            {isUploading ? 'ENCRYPTING ARTIFACTS...' : 'LOCK VAULT & START COUNTDOWN'}
+            {isUploading ? 'ENCRYPTING ARTIFACTS...' : 'LOCK VAULT IN STANDBY MODE'}
             {!isUploading && <ArrowRight size={18} strokeWidth={2} />}
           </button>
 
