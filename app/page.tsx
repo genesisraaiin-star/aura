@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plus, ArrowRight, Radio } from 'lucide-react';
+import { Plus, ArrowRight, Radio, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 
