@@ -16,7 +16,7 @@ const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" })
   </svg>
 );
 
-export default function AuraApp() {
+export default function DropCirclesApp() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [formMode, setFormMode] = useState<'unlock' | 'request'>('unlock');
   const [status, setStatus] = useState<'idle' | 'loading' | 'denied' | 'success'>('idle');
@@ -152,7 +152,7 @@ export default function AuraApp() {
         <nav className="flex justify-between items-center px-6 py-4 border-b-2 border-black bg-white">
           <div className="flex items-center gap-3">
             <LinkedCirclesLogo className="w-10 h-6" stroke="black" />
-            <span className="text-2xl font-serif tracking-tighter mt-1">AURA</span>
+            <span className="text-2xl font-serif tracking-tighter mt-1">DropCircles</span>
           </div>
           <div className="flex gap-8 text-xs font-bold uppercase tracking-[0.2em] hidden md:flex">
             <button onClick={() => setActiveTab('drop')} className={`hover:text-red-600 transition-colors ${activeTab === 'drop' && 'text-red-600 border-b-2 border-red-600'}`}>Control Room</button>
