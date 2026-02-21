@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 // The geometric Infinity/Connection Logo
 const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
@@ -196,9 +197,13 @@ export default function AuraApp() {
           )}
         </main>
 
-        <button className="fixed bottom-8 right-8 w-16 h-16 bg-[#ff3300] text-white hover:bg-black hover:scale-105 transition-all flex items-center justify-center rounded-none z-50 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-black">
+        {/* THIS IS THE PORTAL BUTTON TO THE VAULT */}
+        <Link 
+          href="/vault" 
+          className="fixed bottom-8 right-8 w-16 h-16 bg-[#ff3300] text-white hover:bg-black hover:scale-105 transition-all flex items-center justify-center rounded-none z-50 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-black"
+        >
           <Plus size={32} strokeWidth={2} />
-        </button>
+        </Link>
 
         <footer className="fixed bottom-4 left-6 font-mono text-[10px] text-zinc-400 uppercase tracking-[0.3em]">
           E.I.G.H.T.
