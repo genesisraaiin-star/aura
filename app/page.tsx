@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
+import { submitWaitlist } from './actions';
 
 // The geometric Infinity/Connection Logo
 const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
@@ -23,7 +24,7 @@ export default function AuraApp() {
   // Dashboard State
   const [activeTab, setActiveTab] = useState('drop');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formMode === 'unlock') {
@@ -40,11 +41,16 @@ export default function AuraApp() {
     } else {
       if (!email) return;
       setStatus('loading');
-      setTimeout(() => {
-        // Simulates a successful email capture to a database
+      
+      // Ping the secure Server Action we built
+      const result = await submitWaitlist(email);
+      
+      if (result.success) {
         setStatus('success');
         setEmail('');
-      }, 1500);
+      } else {
+        setStatus('denied');
+      }
     }
   };
 
@@ -182,7 +188,7 @@ export default function AuraApp() {
   }
 
   // ==========================================
-  // VIEW 2: THE HYPE GATE (Locked State - Apple/Monolithic Vibe)
+  // VIEW 2: THE HYPE GATE
   // ==========================================
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative overflow-hidden">
@@ -255,6 +261,11 @@ export default function AuraApp() {
             {status === 'denied' && formMode === 'unlock' && (
               <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-pulse">
                 ACCESS DENIED.
+              </p>
+            )}
+            {status === 'denied' && formMode === 'request' && (
+              <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-pulse">
+                NETWORK ERROR. PLEASE RETRY.
               </p>
             )}
             {status === 'success' && formMode === 'request' && (
