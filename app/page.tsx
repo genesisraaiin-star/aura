@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
 import { submitWaitlist } from './actions';
 
-// The geometric Infinity/Connection Logo
 const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
   <svg viewBox="0 0 60 40" fill="none" stroke={stroke} strokeWidth="2" className={className}>
     <circle cx="22" cy="20" r="14" />
@@ -12,16 +11,12 @@ const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" })
 );
 
 export default function AuraApp() {
-  // Gate State
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [formMode, setFormMode] = useState<'unlock' | 'request'>('unlock');
   const [status, setStatus] = useState<'idle' | 'loading' | 'denied' | 'success'>('idle');
   
-  // Inputs
   const [key, setKey] = useState('');
   const [email, setEmail] = useState('');
-
-  // Dashboard State
   const [activeTab, setActiveTab] = useState('drop');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,13 +37,19 @@ export default function AuraApp() {
       if (!email) return;
       setStatus('loading');
       
-      // Ping the secure Server Action we built
-      const result = await submitWaitlist(email);
-      
-      if (result.success) {
-        setStatus('success');
-        setEmail('');
-      } else {
+      try {
+        // Ping the secure Server Action
+        const result = await submitWaitlist(email);
+        
+        if (result && result.success) {
+          setStatus('success');
+          setEmail('');
+        } else {
+          // Triggers the red 'NETWORK ERROR' if API fails
+          setStatus('denied'); 
+        }
+      } catch (error) {
+        // Failsafe so the button never hangs forever
         setStatus('denied');
       }
     }
@@ -92,7 +93,7 @@ export default function AuraApp() {
               <div className="space-y-0 border-t-2 border-black bg-white">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b-2 border-black hover:bg-zinc-50 transition-colors cursor-pointer group">
                   <div className="mb-4 sm:mb-0">
-                    <h3 className="font-bold text-xl uppercase tracking-tight group-hover:text-red-600 transition-colors">No Check (Rough Draft)</h3>
+                    <h3 className="font-bold text-xl uppercase tracking-tight text-red-600">No Check (Rough Draft)</h3>
                     <p className="text-xs font-mono text-zinc-500 mt-2 uppercase tracking-widest">WAV // 44.1kHz // WATERMARKED</p>
                   </div>
                   <div className="flex gap-3">
@@ -193,14 +194,12 @@ export default function AuraApp() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative overflow-hidden">
       
-      {/* Top Floating Logo */}
       <div className="absolute top-12 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-1000">
         <LinkedCirclesLogo className="w-16 h-10 text-white opacity-90" />
       </div>
 
       <main className="w-full max-w-3xl mx-auto flex flex-col items-center mt-8 animate-in fade-in duration-1000 delay-300 fill-mode-both">
         
-        {/* The Manifesto - Big, Bold, Unified */}
         <div className="text-center mb-24 space-y-16">
           <h2 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.1]">
             <span className="text-zinc-600 block hover:text-zinc-400 transition-colors duration-500">No platform.</span>
@@ -215,7 +214,6 @@ export default function AuraApp() {
           </h2>
         </div>
 
-        {/* Dynamic Input Form */}
         <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-6 relative">
           
           <div className="relative overflow-hidden">
@@ -276,7 +274,6 @@ export default function AuraApp() {
           </div>
         </form>
 
-        {/* Bottom Toggle Button */}
         <button 
           onClick={() => {
             setFormMode(formMode === 'unlock' ? 'request' : 'unlock');
