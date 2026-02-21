@@ -1,6 +1,12 @@
 "use client";
 import React, { useState } from 'react';
 import { Upload, Clock, ArrowRight, Lock } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase using the keys you saved in Vercel
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const LinkedCirclesLogo = ({ className = "w-16 h-10", stroke = "currentColor" }) => (
   <svg viewBox="0 0 60 40" fill="none" stroke={stroke} strokeWidth="2" className={className}>
@@ -18,13 +24,40 @@ export default function ArtistVault() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!audioFile) {
+      alert("PLEASE ATTACH A MASTER AUDIO FILE.");
+      return;
+    }
+
     setIsUploading(true);
     
-    // Tomorrow we wire this directly to the Supabase storage bucket
-    setTimeout(() => {
-      setIsUploading(false);
+    try {
+      // 1. Create a unique filename so tracks don't overwrite each other
+      const fileExt = audioFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      // 2. Fire the file directly into the Supabase 'vault' bucket
+      const { data, error } = await supabase.storage
+        .from('vault')
+        .upload(`artifacts/${fileName}`, audioFile);
+
+      if (error) throw error;
+
+      // Reset the form on success
+      setAudioFile(null);
+      setVisualFile(null);
+      setTitle('');
+      setReleaseDate('');
+      
       alert("ARTIFACT SECURED IN THE VAULT.");
-    }, 2000);
+      
+    } catch (error: any) {
+      console.error("Upload Failed:", error);
+      alert(`UPLOAD FAILED: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -57,7 +90,6 @@ export default function ArtistVault() {
 
         <form onSubmit={handleUpload} className="space-y-12">
           
-          {/* Title Input */}
           <div className="space-y-4">
             <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500 block">
               [01] Artifact Designation
@@ -72,7 +104,6 @@ export default function ArtistVault() {
             />
           </div>
 
-          {/* Timing Input */}
           <div className="space-y-4">
             <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500 block">
               [02] Communion Timer (Go-Live)
@@ -89,10 +120,8 @@ export default function ArtistVault() {
             </div>
           </div>
 
-          {/* File Uploads - Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
             
-            {/* Audio Dropzone */}
             <div className="border-4 border-black bg-white p-8 hover:bg-black hover:text-white transition-colors group cursor-pointer relative">
               <input 
                 type="file" 
@@ -110,7 +139,6 @@ export default function ArtistVault() {
               </div>
             </div>
 
-            {/* Visual Dropzone */}
             <div className="border-4 border-black bg-white p-8 hover:bg-black hover:text-white transition-colors group cursor-pointer relative">
               <input 
                 type="file" 
