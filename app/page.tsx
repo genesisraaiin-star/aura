@@ -16,6 +16,7 @@ export default function AuraApp() {
     
     setTimeout(() => {
       const enteredKey = key.trim().toUpperCase();
+      // Unlock if they use the brand acronym or track name
       if (enteredKey === 'EIGHT' || enteredKey === 'NOCHECK') {
         setIsUnlocked(true);
       } else {
@@ -160,93 +161,77 @@ export default function AuraApp() {
   // VIEW 2: THE HYPE GATE (Locked State)
   // ==========================================
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-[#ff3300] selection:text-white flex flex-col justify-between p-6 md:p-12 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black flex flex-col items-center justify-center p-6 md:p-12 relative">
       
-      {/* Background Texture / Grain effect (CSS simulated) */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
-
-      <nav className="flex justify-between items-start border-b border-zinc-800 pb-6 relative z-10">
-        <div className="font-serif text-3xl tracking-tighter">∞ AURA</div>
-        <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3300]">
-          [ System Locked ]
-        </div>
-      </nav>
-
-      <main className="w-full mx-auto flex flex-col justify-center mt-12 mb-20 animate-in fade-in duration-1000 relative z-10 lg:pl-12">
+      <main className="w-full max-w-2xl mx-auto flex flex-col items-center mt-[-5vh] animate-in fade-in duration-1000">
         
-        <h1 className="font-serif text-7xl md:text-9xl font-bold uppercase tracking-tighter mb-16 leading-none">
-          Strictly <br/>
-          <span className="text-transparent border-text" style={{ WebkitTextStroke: '2px white' }}>Confidential.</span>
+        {/* Title */}
+        <h1 className="font-serif text-6xl md:text-8xl font-bold uppercase tracking-tighter mb-16 text-center w-full">
+          INVITE ONLY
         </h1>
         
-        {/* THE MANIFESTO (Poetic Teaser) */}
-        <div className="font-mono text-xs md:text-sm uppercase tracking-widest mb-20 max-w-2xl flex flex-col gap-8">
+        {/* Mysterious Teaser Block */}
+        <div className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.2em] mb-12 flex flex-col items-center w-full">
+          <p className="text-zinc-400 mb-6">THE ECOSYSTEM IS CURRENTLY LOCKED.</p>
           
-          <div className="border-l-2 border-[#ff3300] pl-6 py-1">
-            <span className="text-white block mb-2 font-bold">[01] The Artifact</span>
-            <span className="text-zinc-500 leading-loose">Audio severed from the algorithm. <br/>Watermarked. Ephemeral. Immutable.</span>
+          <div className="border-l border-zinc-600 pl-4 text-left text-zinc-300 space-y-3 py-2">
+            <p>[01] A CLOSED-CIRCUIT<br/>INFRASTRUCTURE.</p>
+            <p>[02] ZERO LEAKS. ZERO ALGORITHMS.</p>
+            <p>[03] DIRECT-TO-VAULT DROPS.</p>
           </div>
-
-          <div className="border-l-2 border-white pl-6 py-1">
-            <span className="text-white block mb-2 font-bold">[02] The Communion</span>
-            <span className="text-zinc-500 leading-loose">Audiences are not metrics. They are circles. <br/>The Boardroom. The Studio. The Front Row.</span>
-          </div>
-
-          <div className="border-l-2 border-zinc-700 pl-6 py-1">
-            <span className="text-white block mb-2 font-bold">[03] The Vault</span>
-            <span className="text-zinc-500 leading-loose">Capital without intermediaries. <br/>Value transferred directly from blood to heart.</span>
-          </div>
-
+          
+          <p className="text-zinc-400 mt-8 max-w-xs text-center leading-relaxed">
+            BETA ACCESS IS STRICTLY LIMITED TO 100 VISIONARIES.
+          </p>
         </div>
 
-        {/* TERMINAL INPUT */}
-        <form onSubmit={handleAccess} className="w-full max-w-md flex flex-col gap-4">
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-[#ff3300]">{'>'}</span>
-            <input 
-              type="text" 
-              placeholder="ENTER BETA KEY" 
-              className="w-full bg-zinc-950 border-2 border-zinc-800 py-5 pl-12 pr-4 font-mono text-lg uppercase tracking-[0.2em] focus:outline-none focus:border-[#ff3300] transition-colors placeholder:text-zinc-800 text-white"
-              value={key}
-              onChange={(e) => {
-                setKey(e.target.value);
-                setStatus('idle');
-              }}
-            />
-          </div>
+        {/* The Poetic Gatekeeper */}
+        <div className="mb-16 flex flex-col items-center text-center">
+          <p className="font-serif italic text-lg md:text-xl text-zinc-500 max-w-sm leading-relaxed">
+            "The Soul selects her own Society —<br />
+            Then — shuts the Door."
+          </p>
+          <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-zinc-600 mt-4">
+            — Emily Dickinson
+          </p>
+        </div>
+
+        {/* Terminal Input */}
+        <form onSubmit={handleAccess} className="w-full max-w-sm flex flex-col gap-6">
+          <input 
+            type="text" 
+            placeholder="ENTER ACCESS KEY" 
+            className="w-full bg-transparent border-b border-zinc-800 py-4 font-mono text-center text-xs uppercase tracking-[0.2em] focus:outline-none focus:border-white transition-colors placeholder:text-zinc-700 text-white"
+            value={key}
+            onChange={(e) => {
+              setKey(e.target.value);
+              setStatus('idle');
+            }}
+          />
           
           <button 
             type="submit"
             disabled={status === 'loading'}
-            className="w-full bg-white text-black py-5 font-mono font-bold text-xs uppercase tracking-[0.3em] hover:bg-[#ff3300] hover:text-white transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+            className="w-full border border-white bg-black text-white py-4 font-mono font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            {status === 'loading' ? 'Authenticating...' : 'Initiate Access'}
+            {status === 'loading' ? 'VERIFYING...' : 'UNLOCK'}
+            {status !== 'loading' && <ArrowRight size={14} strokeWidth={2} />}
           </button>
 
-          <div className="h-6 mt-2">
+          <div className="h-4 mt-1 flex justify-center">
             {status === 'denied' && (
-              <p className="font-mono text-[10px] text-[#ff3300] uppercase tracking-widest animate-pulse">
-                ERR: Unrecognized clearance code.
+              <p className="font-mono text-[10px] text-red-600 uppercase tracking-widest animate-pulse">
+                ACCESS DENIED.
               </p>
             )}
           </div>
         </form>
 
-        <button className="mt-12 font-mono text-[10px] text-zinc-600 hover:text-white transition-colors uppercase tracking-[0.2em] text-left w-fit flex items-center gap-2 group">
-          <span className="w-4 h-[1px] bg-zinc-600 group-hover:bg-white transition-colors"></span>
-          Petition for Entry
+        <button className="mt-16 font-mono text-[9px] text-zinc-600 hover:text-white border-b border-zinc-800 hover:border-white transition-colors uppercase tracking-[0.3em] pb-1">
+          REQUEST A BETA KEY
         </button>
       </main>
 
-      <footer className="flex flex-col md:flex-row justify-between items-end gap-4 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600 border-t border-zinc-900 pt-8 relative z-10">
-        <div>
-          <span className="text-white">AURA</span> // V.0.1.0<br/>
-          &copy; 2026
-        </div>
-        <div className="text-right">
-          Experience Infinite<br/>Greatness Here Today
-        </div>
-      </footer>
     </div>
   );
 }
