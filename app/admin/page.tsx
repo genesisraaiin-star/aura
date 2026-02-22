@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // ============================================================
 // CHANGE THIS — your private admin password
 // ============================================================
-const ADMIN_PASSWORD = 'dc-admin-2025';
+const ADMIN_PASSWORD = '$kyisblu3';
 
 const LinkedCirclesLogo = ({ className = "w-10 h-6", stroke = "currentColor" }) => (
   <svg viewBox="0 0 60 40" fill="none" stroke={stroke} strokeWidth="2" className={className}>
