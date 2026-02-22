@@ -65,7 +65,7 @@ export default function FeedbackDashboard() {
     setPage(0);
   }, [filterSong, filterThumb, filterStars, data]);
 
-  const songs = [...new Set(data.map(d => d.song_id))];
+  const songs = Array.from(new Set(data.map(d => d.song_id)));
   const totalResponses = filtered.length;
   const thumbsUp = filtered.filter(d => d.thumbs === "up").length;
   const thumbsDown = filtered.filter(d => d.thumbs === "down").length;
