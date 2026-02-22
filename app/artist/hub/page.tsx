@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Users, Download, DollarSign, Trash2, Settings, User, Camera, Check, X } from 'lucide-react';
+import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Users, Download, DollarSign, Trash2, Settings, User, Camera, Check, X, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
@@ -196,6 +196,12 @@ export default function VisionaryHub() {
   const copyInviteLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/drop/${activeCircle.id}`);
     alert("INVITE LINK COPIED.");
+  };
+
+  const previewAsFan = () => {
+    // Opens drop link with a preview token — bypasses email gate and session lock
+    const previewUrl = `${window.location.origin}/drop/${activeCircle.id}?preview=true`;
+    window.open(previewUrl, '_blank');
   };
 
   const removeFromRoster = async (fanId: string, fanEmail: string) => {
@@ -403,6 +409,9 @@ They will be able to re-enter the vault with this email.`)) return;
                   </button>
                   <button onClick={copyInviteLink} className="w-full py-3 px-6 font-bold text-[10px] uppercase tracking-widest border-2 border-black bg-black text-white flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
                     <LinkIcon size={14} /> Copy Fan Invite Link
+                  </button>
+                  <button onClick={previewAsFan} className="w-full py-3 px-6 font-bold text-[10px] uppercase tracking-widest border-2 border-zinc-400 bg-transparent text-zinc-500 flex items-center justify-center gap-2 hover:border-black hover:text-black transition-colors">
+                    <Eye size={14} /> Preview as Fan
                   </button>
                 </div>
               </div>
