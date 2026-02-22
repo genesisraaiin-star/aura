@@ -273,7 +273,7 @@ export default function VisionaryHub() {
         </div>
         <div className="flex gap-6 items-center">
           <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 hidden md:block">
-            VISIONARY: {user?.email}
+            {user?.email}
           </span>
           <button onClick={handleLogout} className="text-[10px] font-bold font-mono uppercase tracking-[0.2em] text-black hover:text-red-600 transition-colors flex items-center gap-2">
             Logout <LogOut size={12} />
