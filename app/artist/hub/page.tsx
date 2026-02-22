@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Users, Download, DollarSign, Trash2, Settings, User, Camera, Check, X, Eye } from 'lucide-react';
+import { Plus, Folder, LogOut, Lock, Globe, Upload, Link as LinkIcon, Edit2, Music, Video, Users, Download, DollarSign, Trash2, Settings, User, Camera, Check, X, Eye, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
@@ -199,15 +199,12 @@ export default function VisionaryHub() {
   };
 
   const previewAsFan = () => {
-    // Opens drop link with a preview token — bypasses email gate and session lock
     const previewUrl = `${window.location.origin}/drop/${activeCircle.id}?preview=true`;
     window.open(previewUrl, '_blank');
   };
 
   const removeFromRoster = async (fanId: string, fanEmail: string) => {
-    if (!window.confirm(`REMOVE ${fanEmail.toUpperCase()} FROM THE GUESTLIST?
-
-They will be able to re-enter the vault with this email.`)) return;
+    if (!window.confirm(`REMOVE ${fanEmail.toUpperCase()} FROM THE GUESTLIST?\n\nThey will be able to re-enter the vault with this email.`)) return;
     const { error } = await supabase.from('fan_roster').delete().eq('id', fanId);
     if (!error) {
       setFans(fans.filter(f => f.id !== fanId));
@@ -238,6 +235,14 @@ They will be able to re-enter the vault with this email.`)) return;
           <span className="text-2xl font-serif tracking-tighter mt-1">DropCircles</span>
         </div>
         <div className="flex gap-4 items-center">
+          {/* Fan Feedback link */}
+          <button
+            onClick={() => router.push('/artist/feedback')}
+            className="flex items-center gap-2 px-3 py-2 border-2 border-zinc-300 font-mono text-[10px] uppercase tracking-widest text-zinc-500 hover:border-black hover:text-black transition-all"
+          >
+            <MessageSquare size={12} /> Fan Feedback
+          </button>
+
           {/* Profile toggle */}
           <button
             onClick={() => setShowProfile(!showProfile)}
